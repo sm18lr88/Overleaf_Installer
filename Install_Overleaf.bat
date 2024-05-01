@@ -8,9 +8,9 @@ set "errorColor=0C" :: Red for error messages
 :: Initial setup and welcome
 color %infoColor%
 echo Welcome to the Overleaf installation script!
+echo Please ensure you have at least 3 GB of free disk space available before continuing.
 
 :: Define functions to check system requirements and setup Overleaf
-call :CheckDiskSpace
 call :SetupRepository
 call :InstallAndSetupWSL
 call :InstallAndSetupDocker
@@ -18,24 +18,6 @@ call :EnsureDockerRunning
 call :ConfigureOverleaf
 call :FinalInstructions
 ENDLOCAL
-GOTO :EOF
-
-:: Function to check disk space on all partitions
-:CheckDiskSpace
-echo Checking available disk space on all partitions...
-set "adequateSpace=false"
-for /f "tokens=1,3" %%i in ('wmic logicaldisk get size^,freespace^,name') do (
-    set /a size=%%j / 1024 / 1024 / 1024
-    if !size! gtr 2 (
-        echo %%i has !size! GB free.
-        set "adequateSpace=true"
-    )
-)
-if not "%adequateSpace%"=="true" (
-    color %errorColor%
-    echo Not enough disk space available on any drive. At least 2.5 GB is required.
-    exit /b
-)
 GOTO :EOF
 
 :: Function to setup repository
