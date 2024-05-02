@@ -4,10 +4,10 @@
 
 
 It should take care of all the requirements for you: 
-- Checks for WSL and Docker, and installs them if necessary.
-- Offers customizing certain things, and a persistent data folder.
-- Offers creation of username and password, and provides a link to create the password.
-- Creates a "shortcut" that you can click on to start Overleaf automatically.
+- [ ] Checks for WSL and Docker, and installs them if necessary. For now, you must manually install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) and [Docker](https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe?utm_location=module). 
+- [X] Offers customizing certain things, and a persistent data folder.
+- [X] Offers creation of username and password, and provides a link to create the password.
+- [X] Creates a "shortcut" that you can click on to start Overleaf automatically.
 
 In other words, the whole works. I just hope it works for you.
 
