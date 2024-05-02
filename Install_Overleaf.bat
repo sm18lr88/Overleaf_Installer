@@ -3,7 +3,9 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 :: Color codes for better visibility
 set "infoColor=0A"  :: Green for informational messages
+set "warningColor=0E" :: Yellow for warning messages
 set "errorColor=0C" :: Red for error messages
+set "normalColor=07" :: White for normal text
 
 :: Initial setup and welcome
 color %infoColor%
@@ -37,7 +39,13 @@ if "%repoChoice%"=="1" (
     )
     cd /d "%repoPath%"
     echo Downloading and preparing Overleaf repository...
-    start "Downloading Overleaf" powershell -command "Invoke-WebRequest -Uri https://github.com/overleaf/overleaf/archive/refs/heads/master.zip -OutFile overleaf.zip; Expand-Archive -Path overleaf.zip -DestinationPath .; Remove-Item overleaf.zip"
+    powershell -command "Invoke-WebRequest -Uri https://github.com/overleaf/overleaf/archive/refs/heads/master.zip -OutFile overleaf.zip; Expand-Archive -Path overleaf.zip -DestinationPath .; Remove-Item overleaf.zip" && (
+        echo Download and extraction complete.
+    ) || (
+        color %errorColor%
+        echo Failed to download or extract Overleaf. Please check your internet connection and try again.
+        exit /b
+    )
 ) else (
     echo Enter the path to your existing Overleaf directory:
     set /p repoPath="Enter the path: "
@@ -56,16 +64,15 @@ GOTO :EOF
 echo Checking for Windows Subsystem for Linux (WSL)...
 wsl --list --quiet >nul 2>&1
 if errorlevel 1 (
-    color %infoColor%
     echo WSL is not installed or no Linux distributions are detected.
     set /p installWSL="Would you like to install WSL and a Linux distribution now? (Y/N): "
     if /i "%installWSL%"=="Y" (
-        start "Installing WSL" dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+        echo Installing WSL, please wait...
+        dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
         wsl --install
         echo WSL installation initiated. Please restart your computer to complete the installation and rerun this script.
         exit /b
     ) else (
-        color %errorColor%
         echo Please install WSL and a Linux distribution to continue.
         exit /b
     )
@@ -77,14 +84,17 @@ GOTO :EOF
 echo Checking if Docker is installed...
 where docker >nul 2>&1
 if errorlevel 1 (
-    color %infoColor%
     echo Docker is not installed.
     set /p installDocker="Would you like to install Docker now? (Y/N): "
     if /i "%installDocker%"=="Y" (
-        start "Installing Docker" powershell -command "Invoke-WebRequest -Uri https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe -OutFile DockerInstaller.exe; Start-Process -FilePath DockerInstaller.exe -Args 'install --quiet' -Wait; Remove-Item DockerInstaller.exe"
-        echo Docker installation completed.
+        echo Downloading and installing Docker...
+        powershell -command "Invoke-WebRequest -Uri https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe -OutFile DockerInstaller.exe; Start-Process -FilePath DockerInstaller.exe -Args 'install --quiet' -Wait; Remove-Item DockerInstaller.exe" && (
+            echo Docker installation completed.
+        ) || (
+            echo Failed to download or install Docker. Please check your internet connection and try again.
+            exit /b
+        )
     ) else (
-        color %errorColor%
         echo Please install Docker to continue.
         exit /b
     )
@@ -96,7 +106,6 @@ GOTO :EOF
 echo Verifying Docker is running...
 docker info >nul 2>&1
 if errorlevel 1 (
-    color %errorColor%
     echo Docker is not running. Attempting to start Docker...
     start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
     :: Wait for Docker to start and become ready
@@ -110,12 +119,10 @@ if errorlevel 1 (
             echo Waiting for Docker to start...
             goto waitForDocker
         )
-        color %errorColor%
         echo Failed to start Docker. Please start Docker manually and rerun this script.
         exit /b
     )
 )
-color %infoColor%
 echo Docker is running.
 GOTO :EOF
 
@@ -132,7 +139,6 @@ if "%port%"=="" set port=8080
 :: Check if the port is available
 netstat -an | findstr ":%port% " >nul
 if not errorlevel 1 (
-    color %errorColor%
     echo Port %port% is already in use. Please choose a different port.
     pause
     exit /b
@@ -141,7 +147,7 @@ if not errorlevel 1 (
 :: Choose TeX Live Scheme
 echo Please choose a TeX Live scheme to install:
 echo [1] Medium Scheme - Approx. 2 GB, covers essential and widely used packages.
-echo [2] Full Scheme - Approx. 6 GB, includes virtually all available packages. Best choice for novices, as installing packages is a bit difficult.
+echo [2] Full Scheme - Approx. 6 GB, includes virtually all available packages.
 set /p schemeChoice="Enter your choice (1 or 2): "
 if "%schemeChoice%"=="2" (
     echo You have chosen the Full Scheme. This will take more disk space and time to install.
